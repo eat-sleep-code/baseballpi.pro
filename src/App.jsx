@@ -1,10 +1,164 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Settings, X, Info } from 'lucide-react';
+const CurrentPlaySection = ({ currentPlay, plays }) => {
+  const displayPlay = currentPlay || (plays?.allPlays?.length > 0 ? plays.allPlays[plays.allPlays.length - 1] : null);
+  
+  if (!displayPlay) {
+    return (
+      <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 md:p-6 border border-white/10 shadow-xl">
+        <h3 className="text-white font-bold text-lg mb-3">Current Play</h3>
+        <div className="text-gray-400">Waiting for play data...</div>
+      </div>
+    );
+  }
+
+  const playEvents = displayPlay.playEvents || [];
+  const pitches = playEvents.filter(event => event.isPitch);
+  const lastPitch = pitches[pitches.length - 1];
+  
+  // Count balls and strikes from pitch results
+  let balls = 0;
+  let strikes = 0;
+  pitches.forEach(pitch => {
+    const call = pitch.details?.call?.description || '';
+    if (call.includes('Ball')) balls++;
+    if (call.includes('Called Strike') || call.includes('Swinging Strike')) strikes++;
+    if (call.includes('Foul') && strikes < 2) strikes++;
+  });
+  
+  const renderStrikeZone = () => {
+    return (
+      <div className="relative w-full max-w-xs mx-auto aspect-square bg-gradient-to-br from-blue-900/20 to-blue-800/20 rounded-lg border border-blue-400/30">
+        <div className="absolute" 
+             style={{
+               left: '25%',
+               top: '25%',
+               width: '50%',
+               height: '50%',
+               border: '2px solid rgba(255, 255, 255, 0.5)',
+               backgroundColor: 'rgba(255, 255, 255, 0.05)'
+             }}>
+        </div>
+        
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-white/30 transform rotate-45"></div>
+        
+        {pitches.map((pitch, index) => {
+          const coords = pitch.pitchData?.coordinates;
+          if (!coords || coords.pX === undefined || coords.pZ === undefined) return null;
+          
+          const { pX, pZ } = coords;
+          const xRange = 3;
+          const zRange = 5;
+          const xPercent = ((pX + xRange/2) / xRange) * 100;
+          const zPercent = ((3.5 + 1 - pZ) / zRange) * 100;
+          
+          const isLastPitch = index === pitches.length - 1;
+          const pitchResult = pitch.details?.call?.description || '';
+          const isBall = pitchResult.includes('Ball');
+          const isStrike = pitchResult.includes('Strike') || pitchResult.includes('Foul');
+          
+          return (
+            <div 
+              key={index}
+              className="absolute"
+              style={{
+                left: `${Math.max(0, Math.min(100, xPercent))}%`,
+                top: `${Math.max(0, Math.min(100, zPercent))}%`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: isLastPitch ? 10 : 5
+              }}
+            >
+              <div 
+                className={`rounded-full flex items-center justify-center ${isLastPitch ? 'w-6 h-6' : 'w-5 h-5'}`}
+                style={{
+                  backgroundColor: isBall ? '#ef4444' : isStrike ? '#22c55e' : '#6b7280',
+                  opacity: isLastPitch ? 1 : 0.7,
+                  boxShadow: isLastPitch ? (isBall ? '0 0 10px #ef4444' : '0 0 10px #22c55e') : 'none',
+                  border: '2px solid rgba(255,255,255,0.5)'
+                }}
+              >
+                <span className="text-white text-xs font-bold">{index + 1}</span>
+              </div>
+              {isLastPitch && (
+                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-xs text-white whitespace-nowrap bg-black/70 px-2 py-1 rounded">
+                  {pitch.details?.type?.description}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        
+        <div className="absolute top-1 left-2">
+          <div className="flex gap-1">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="w-3 h-3 rounded-full border-2 border-red-400"
+                style={{ backgroundColor: i < balls ? '#ef4444' : 'transparent' }}
+              />
+            ))}
+          </div>
+          <div className="text-gray-400 text-xs mt-1">Balls</div>
+        </div>
+        
+        <div className="absolute top-1 right-2">
+          <div className="flex gap-1">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="w-3 h-3 rounded-full border-2 border-green-400"
+                style={{ backgroundColor: i < strikes ? '#22c55e' : 'transparent' }}
+              />
+            ))}
+          </div>
+          <div className="text-gray-400 text-xs mt-1">Strikes</div>
+        </div>
+        
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-gray-400">
+          Catcher's View
+        </div>
+      </div>
+    );
+  };
+  
+  return (
+    <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 md:p-6 border border-white/10 shadow-xl">
+      <h3 className="text-white font-bold text-lg mb-3">
+        {displayPlay === currentPlay ? 'Current Play' : 'Last Play'}
+      </h3>
+      
+      <div className="space-y-4">
+        {lastPitch?.isPitch && (
+          <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-400/20">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-blue-300 font-semibold text-lg">
+                {lastPitch.details?.type?.description || 'Pitch'}
+              </span>
+              <span className="text-white text-2xl font-bold">
+                {lastPitch.pitchData?.startSpeed ? `${Math.round(lastPitch.pitchData.startSpeed)} mph` : ''}
+              </span>
+            </div>
+            <div className="text-gray-300 text-sm">
+              {lastPitch.details?.description || ''}
+            </div>
+          </div>
+        )}
+        
+        {renderStrikeZone()}
+        
+        <div className="text-gray-300 bg-white/5 p-3 rounded-lg">
+          {displayPlay.result?.description || 'No play description available'}
+        </div>
+      </div>
+    </div>
+  );
+};import React, { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Settings, X } from 'lucide-react';
 
 const App = () => {
   const [favoriteTeams, setFavoriteTeams] = useState([]);
   const [showTeamSelector, setShowTeamSelector] = useState(false);
   const [liveGames, setLiveGames] = useState([]);
+  const [allLiveGames, setAllLiveGames] = useState([]);
+  const [showGameSelector, setShowGameSelector] = useState(false);
   const [currentGameIndex, setCurrentGameIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isOffSeason, setIsOffSeason] = useState(false);
@@ -14,8 +168,8 @@ const App = () => {
   const [baseTooltip, setBaseTooltip] = useState(null);
   const [allTeams, setAllTeams] = useState([]);
   const tooltipTimeoutRef = useRef(null);
+  const MAX_FAVORITE_TEAMS = 3;
 
-  // Fetch teams list dynamically
   useEffect(() => {
     const fetchTeams = async () => {
       try {
@@ -39,22 +193,12 @@ const App = () => {
     fetchTeams();
   }, []);
 
-  // Check if favorites exist on mount
   useEffect(() => {
-    // Stub: Would normally load from localStorage
-    // const saved = localStorage.getItem('mlbFavoriteTeams');
-    // if (saved) {
-    //   setFavoriteTeams(JSON.parse(saved));
-    // } else {
-    //   setShowTeamSelector(true);
-    // }
-    
     if (favoriteTeams.length === 0 && allTeams.length > 0) {
       setShowTeamSelector(true);
     }
   }, [allTeams]);
 
-  // Fetch live games data
   useEffect(() => {
     const fetchGames = async () => {
       try {
@@ -72,27 +216,41 @@ const App = () => {
         if (data.dates && data.dates.length > 0) {
           const games = data.dates[0].games;
           
+          // Get all live games
+          const allLive = games.filter(g => g.status.abstractGameState === 'Live');
+          setAllLiveGames(allLive);
+          
+          // Filter for favorite teams
           const relevantGames = games.filter(g => 
             favoriteTeams.length === 0 || 
             favoriteTeams.includes(g.teams.away.team.id) || 
             favoriteTeams.includes(g.teams.home.team.id)
           );
           
-          const live = relevantGames.filter(g => 
+          // Get live games from favorites
+          const favoriteLive = relevantGames.filter(g => 
             g.status.abstractGameState === 'Live'
           );
           
-          if (live.length > 0) {
-            setLiveGames(live);
+          if (favoriteLive.length > 0) {
+            setLiveGames(favoriteLive);
+            setNextGame(null);
+            setShowGameSelector(favoriteLive.length > 1);
             setIsOffSeason(false);
+          } else if (allLive.length > 0 && favoriteTeams.length > 0) {
+            // Favorites not playing but other games are live
+            setLiveGames([]);
+            setNextGame(null);
+            setShowGameSelector(false);
           } else {
+            // No live games, show next upcoming game
             const upcoming = relevantGames.filter(g => 
               g.status.abstractGameState === 'Preview'
-            );
+            ).sort((a, b) => new Date(a.gameDate) - new Date(b.gameDate));
             
             if (upcoming.length > 0) {
               setNextGame(upcoming[0]);
-              setIsOffSeason(false);
+              setLiveGames([]);
             }
             
             const final = games.filter(g => g.status.abstractGameState === 'Final');
@@ -118,17 +276,20 @@ const App = () => {
 
   const saveFavoriteTeams = (teams) => {
     setFavoriteTeams(teams);
-    // Stub: Would normally save to localStorage
-    // localStorage.setItem('mlbFavoriteTeams', JSON.stringify(teams));
     setShowTeamSelector(false);
   };
 
   const toggleFavoriteTeam = (teamId) => {
-    setFavoriteTeams(prev => 
-      prev.includes(teamId) 
-        ? prev.filter(id => id !== teamId)
-        : [...prev, teamId]
-    );
+    setFavoriteTeams(prev => {
+      if (prev.includes(teamId)) {
+        return prev.filter(id => id !== teamId);
+      } else {
+        if (prev.length >= MAX_FAVORITE_TEAMS) {
+          return prev;
+        }
+        return [...prev, teamId];
+      }
+    });
   };
 
   const handleBaseClick = (base, runner) => {
@@ -209,11 +370,60 @@ const App = () => {
           </button>
         </div>
         
-        <div className="flex-1 flex flex-col items-center justify-center max-w-6xl mx-auto w-full">
+        <div className="flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full">
           {nextGame && (
             <div className="w-full backdrop-blur-xl bg-white/5 rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl mb-8">
               <h2 className="text-2xl font-bold text-white mb-6 text-center">Next Game</h2>
               <NextGameDisplay game={nextGame} />
+            </div>
+          )}
+          
+          {allLiveGames.length > 0 && favoriteTeams.length > 0 && (
+            <div className="w-full backdrop-blur-xl bg-white/5 rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl mb-8">
+              <h2 className="text-2xl font-bold text-white mb-4 text-center">Your favorites aren't playing right now</h2>
+              <p className="text-gray-300 text-center mb-6">Would you like to watch another game?</p>
+              <div className="grid grid-cols-1 gap-3">
+                {allLiveGames.map((game) => (
+                  <button
+                    key={game.gamePk}
+                    onClick={() => {
+                      setLiveGames([game]);
+                      setCurrentGameIndex(0);
+                    }}
+                    className="p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-2">
+                          <img 
+                            src={`https://www.mlbstatic.com/team-logos/${game.teams.away.team.id}.svg`}
+                            alt={game.teams.away.team.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <span className="text-white font-semibold">{game.teams.away.team.name}</span>
+                      </div>
+                      <span className="text-white text-xl font-bold">{game.teams.away.score}</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-2">
+                          <img 
+                            src={`https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg`}
+                            alt={game.teams.home.team.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <span className="text-white font-semibold">{game.teams.home.team.name}</span>
+                      </div>
+                      <span className="text-white text-xl font-bold">{game.teams.home.score}</span>
+                    </div>
+                    <div className="text-center text-gray-400 text-sm mt-2">
+                      {game.linescore?.isTopInning ? '▲' : '▼'} {game.linescore?.currentInningOrdinal || 'Live'}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           
@@ -224,7 +434,7 @@ const App = () => {
             </div>
           )}
           
-          {!nextGame && recentScores.length === 0 && (
+          {!nextGame && allLiveGames.length === 0 && recentScores.length === 0 && (
             <div className="text-white text-center text-xl">
               No games scheduled for your favorite teams today.
             </div>
@@ -238,7 +448,6 @@ const App = () => {
 
   return (
     <div className="min-h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between p-4 backdrop-blur-xl bg-white/5 border-b border-white/10">
         <div className="flex items-center gap-2 md:gap-4">
           {liveGames.length > 1 && (
@@ -272,7 +481,6 @@ const App = () => {
         </button>
       </div>
 
-      {/* Mobile Tabs */}
       <div className="md:hidden flex backdrop-blur-xl bg-white/5 border-b border-white/10">
         <button
           onClick={() => setActiveTab('game')}
@@ -300,7 +508,6 @@ const App = () => {
         </button>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 overflow-auto p-4">
         <LiveGameDisplay 
           game={currentGame} 
@@ -315,38 +522,48 @@ const App = () => {
 };
 
 const TeamSelector = ({ teams, selected, onToggle, onSave }) => {
+  const MAX_TEAMS = 3;
+  
   return (
     <div className="min-h-screen max-h-screen overflow-auto bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="backdrop-blur-xl bg-white/5 rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Select Your Favorite Teams</h2>
-          <p className="text-gray-300 mb-6">Choose the teams you want to follow</p>
+          <p className="text-gray-300 mb-6">Choose up to {MAX_TEAMS} teams you want to follow</p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 max-h-[60vh] overflow-auto">
-            {teams.map(team => (
-              <button
-                key={team.id}
-                onClick={() => onToggle(team.id)}
-                className={`p-4 rounded-xl border transition-all text-left min-h-[60px] flex items-center gap-3 ${
-                  selected.includes(team.id)
-                    ? 'bg-blue-500/20 border-blue-400/50'
-                    : 'bg-white/5 border-white/10 hover:bg-white/10'
-                }`}
-              >
-                <div className="w-12 h-12 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-2 flex-shrink-0">
-                  <img 
-                    src={`https://www.mlbstatic.com/team-logos/${team.id}.svg`}
-                    alt={team.name}
-                    className="w-full h-full object-contain"
-                    onError={(e) => e.target.style.display = 'none'}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-white font-semibold">{team.abbrev}</div>
-                  <div className="text-gray-400 text-sm truncate">{team.name}</div>
-                </div>
-              </button>
-            ))}
+            {teams.map(team => {
+              const isSelected = selected.includes(team.id);
+              const isDisabled = !isSelected && selected.length >= MAX_TEAMS;
+              
+              return (
+                <button
+                  key={team.id}
+                  onClick={() => onToggle(team.id)}
+                  disabled={isDisabled}
+                  className={`p-4 rounded-xl border transition-all text-left min-h-[60px] flex items-center gap-3 ${
+                    isSelected
+                      ? 'bg-blue-500/20 border-blue-400/50'
+                      : isDisabled
+                      ? 'bg-white/5 border-white/10 opacity-50 cursor-not-allowed'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-2 flex-shrink-0">
+                    <img 
+                      src={`https://www.mlbstatic.com/team-logos/${team.id}.svg`}
+                      alt={team.name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => e.target.style.display = 'none'}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white font-semibold">{team.abbrev}</div>
+                    <div className="text-gray-400 text-sm truncate">{team.name}</div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
           
           <button
@@ -354,7 +571,7 @@ const TeamSelector = ({ teams, selected, onToggle, onSave }) => {
             disabled={selected.length === 0}
             className="w-full py-4 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-xl text-white font-semibold transition-all min-h-[56px]"
           >
-            Save Favorites ({selected.length})
+            Save Favorites ({selected.length}/{MAX_TEAMS})
           </button>
         </div>
       </div>
@@ -365,6 +582,7 @@ const TeamSelector = ({ teams, selected, onToggle, onSave }) => {
 const LiveGameDisplay = ({ game, activeTab, onBaseClick, baseTooltip, onCloseTooltip }) => {
   const [gameData, setGameData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [teamStatsDialog, setTeamStatsDialog] = useState(null);
 
   useEffect(() => {
     const fetchGameData = async () => {
@@ -396,14 +614,81 @@ const LiveGameDisplay = ({ game, activeTab, onBaseClick, baseTooltip, onCloseToo
   const boxscore = liveData.boxscore;
   const gameInfo = gameData.gameData;
 
+  const showTeamStats = async (teamId, teamName) => {
+    try {
+      const response = await fetch(
+        `https://statsapi.mlb.com/api/v1/teams/${teamId}?hydrate=standings`
+      );
+      const data = await response.json();
+      const team = data.teams[0];
+      const standings = team.standings?.regularSeason?.records?.[0];
+      const splitRecords = standings?.records?.splitRecords || [];
+      
+      setTeamStatsDialog({
+        name: teamName,
+        stats: {
+          wins: standings?.wins || team.record?.wins || 0,
+          losses: standings?.losses || team.record?.losses || 0,
+          pct: standings?.winningPercentage || team.record?.winningPercentage || '.000',
+          home: `${splitRecords.find(r => r.type === 'home')?.wins || 0}-${splitRecords.find(r => r.type === 'home')?.losses || 0}`,
+          away: `${splitRecords.find(r => r.type === 'away')?.wins || 0}-${splitRecords.find(r => r.type === 'away')?.losses || 0}`,
+          gb: standings?.gamesBack || '0',
+          l10: splitRecords.find(r => r.type === 'lastTen')?.summary || '0-0'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching team stats:', error);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Desktop Layout */}
+      {teamStatsDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+             onClick={() => setTeamStatsDialog(null)}>
+          <div className="bg-gray-900 rounded-2xl p-6 text-white shadow-2xl border border-white/20 max-w-md w-full"
+               onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6">
+              <h3 className="text-xl font-bold">{teamStatsDialog.name}</h3>
+              <button onClick={() => setTeamStatsDialog(null)} className="p-1 hover:bg-white/10 rounded min-h-[32px] min-w-[32px]">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-gray-400 text-xs uppercase mb-1">Record</div>
+                <div className="text-white font-bold text-lg">{teamStatsDialog.stats.wins}-{teamStatsDialog.stats.losses}</div>
+              </div>
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-gray-400 text-xs uppercase mb-1">Win %</div>
+                <div className="text-white font-bold text-lg">{teamStatsDialog.stats.pct}</div>
+              </div>
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-gray-400 text-xs uppercase mb-1">Home</div>
+                <div className="text-white font-bold">{teamStatsDialog.stats.home}</div>
+              </div>
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-gray-400 text-xs uppercase mb-1">Away</div>
+                <div className="text-white font-bold">{teamStatsDialog.stats.away}</div>
+              </div>
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-gray-400 text-xs uppercase mb-1">Games Back</div>
+                <div className="text-white font-bold">{teamStatsDialog.stats.gb}</div>
+              </div>
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-gray-400 text-xs uppercase mb-1">Last 10</div>
+                <div className="text-white font-bold">{teamStatsDialog.stats.l10}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="hidden md:block">
         <div className="grid grid-cols-3 gap-4 mb-4">
-          {/* Column 1: Score and Diamond */}
           <div className="space-y-4">
-            <ScoreboardSection game={game} liveData={liveData} gameInfo={gameInfo} />
+            <ScoreboardSection game={game} liveData={liveData} gameInfo={gameInfo} onTeamClick={showTeamStats} />
             <DiamondSection 
               runners={currentPlay?.runners || []} 
               onBaseClick={onBaseClick}
@@ -413,27 +698,23 @@ const LiveGameDisplay = ({ game, activeTab, onBaseClick, baseTooltip, onCloseToo
             />
           </div>
           
-          {/* Column 2: Players and Lineup */}
           <div className="space-y-4">
             <PlayersSection boxscore={boxscore} currentPlay={currentPlay} />
             <LineupSection boxscore={boxscore} liveData={liveData} />
           </div>
           
-          {/* Column 3: Current Play */}
           <div>
             <CurrentPlaySection currentPlay={currentPlay} plays={plays} />
           </div>
         </div>
         
-        {/* Full width ticker */}
         <OtherLiveGamesTicker currentGamePk={game.gamePk} />
       </div>
 
-      {/* Mobile Layout */}
       <div className="md:hidden space-y-4">
         {activeTab === 'game' && (
           <>
-            <ScoreboardSection game={game} liveData={liveData} gameInfo={gameInfo} />
+            <ScoreboardSection game={game} liveData={liveData} gameInfo={gameInfo} onTeamClick={showTeamStats} />
             <DiamondSection 
               runners={currentPlay?.runners || []} 
               onBaseClick={onBaseClick}
@@ -461,23 +742,44 @@ const LiveGameDisplay = ({ game, activeTab, onBaseClick, baseTooltip, onCloseToo
   );
 };
 
-const ScoreboardSection = ({ game, liveData, gameInfo }) => {
+const ScoreboardSection = ({ game, liveData, gameInfo, onTeamClick }) => {
   const away = game.teams.away;
   const home = game.teams.home;
   const linescore = liveData.linescore;
   
   const seriesDescription = gameInfo?.game?.seriesDescription || '';
   const seriesGameNumber = gameInfo?.game?.seriesGameNumber || '';
+  
+  // Get series wins from the game data
+  const awaySeriesWins = game.seriesStatus?.awaySeriesWins || away.seriesNumber || 0;
+  const homeSeriesWins = game.seriesStatus?.homeSeriesWins || home.seriesNumber || 0;
+  
+  let seriesStatus = '';
+  if (seriesGameNumber) {
+    if (awaySeriesWins > homeSeriesWins) {
+      seriesStatus = `Game ${seriesGameNumber} (${away.team.name} leads ${awaySeriesWins}-${homeSeriesWins})`;
+    } else if (homeSeriesWins > awaySeriesWins) {
+      seriesStatus = `Game ${seriesGameNumber} (${home.team.name} leads ${homeSeriesWins}-${awaySeriesWins})`;
+    } else if (awaySeriesWins === homeSeriesWins && awaySeriesWins > 0) {
+      seriesStatus = `Game ${seriesGameNumber} (Series tied ${awaySeriesWins}-${homeSeriesWins})`;
+    } else {
+      seriesStatus = `Game ${seriesGameNumber}`;
+    }
+  }
 
   return (
     <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 md:p-6 border border-white/10 shadow-xl">
-      {seriesDescription && (
+      {(seriesDescription || seriesStatus) && (
         <div className="text-center text-gray-300 text-sm mb-3 pb-3 border-b border-white/10">
-          {seriesDescription} {seriesGameNumber && `- Game ${seriesGameNumber}`}
+          {seriesDescription && <div className="font-semibold">{seriesDescription}</div>}
+          {seriesStatus && <div>{seriesStatus}</div>}
         </div>
       )}
       
-      <div className="flex justify-between items-center mb-4">
+      <button 
+        onClick={() => onTeamClick(away.team.id, away.team.name)}
+        className="w-full flex justify-between items-center mb-4 hover:bg-white/5 rounded-lg p-2 -m-2 transition-all"
+      >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="w-12 h-12 md:w-14 md:h-14 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-2.5 flex-shrink-0">
             <img 
@@ -486,18 +788,20 @@ const ScoreboardSection = ({ game, liveData, gameInfo }) => {
               className="w-full h-full object-contain"
             />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 text-left">
             <div className="text-white font-bold text-base md:text-lg truncate">{away.team.name}</div>
             <div className="text-gray-400 text-sm">
               {linescore.teams.away.wins}-{linescore.teams.away.losses}
-              {away.seriesNumber && ` (${away.seriesNumber})`}
             </div>
           </div>
         </div>
         <div className="text-3xl md:text-4xl font-bold text-white ml-2">{away.score}</div>
-      </div>
+      </button>
 
-      <div className="flex justify-between items-center">
+      <button 
+        onClick={() => onTeamClick(home.team.id, home.team.name)}
+        className="w-full flex justify-between items-center hover:bg-white/5 rounded-lg p-2 -m-2 transition-all"
+      >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="w-12 h-12 md:w-14 md:h-14 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-2.5 flex-shrink-0">
             <img 
@@ -506,16 +810,15 @@ const ScoreboardSection = ({ game, liveData, gameInfo }) => {
               className="w-full h-full object-contain"
             />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 text-left">
             <div className="text-white font-bold text-base md:text-lg truncate">{home.team.name}</div>
             <div className="text-gray-400 text-sm">
               {linescore.teams.home.wins}-{linescore.teams.home.losses}
-              {home.seriesNumber && ` (${home.seriesNumber})`}
             </div>
           </div>
         </div>
         <div className="text-3xl md:text-4xl font-bold text-white ml-2">{home.score}</div>
-      </div>
+      </button>
 
       <div className="mt-4 pt-4 border-t border-white/10 flex justify-around text-center">
         <div>
@@ -654,142 +957,6 @@ const DiamondSection = ({ runners, onBaseClick, baseTooltip, onCloseTooltip, box
   );
 };
 
-const CurrentPlaySection = ({ currentPlay, plays }) => {
-  if (!currentPlay && !plays?.allPlays?.length) return null;
-
-  const displayPlay = currentPlay || plays.allPlays[plays.allPlays.length - 1];
-  const playEvents = displayPlay.playEvents || [];
-  
-  // Get all pitches in this at-bat
-  const pitches = playEvents.filter(event => event.isPitch);
-  const lastPitch = pitches[pitches.length - 1];
-  
-  // Strike zone visualization with pitch history
-  const renderStrikeZone = () => {
-    if (pitches.length === 0) return null;
-    
-    return (
-      <div className="relative w-full max-w-xs mx-auto aspect-square bg-gradient-to-br from-blue-900/20 to-blue-800/20 rounded-lg border border-blue-400/30">
-        {/* Strike Zone Box */}
-        <div className="absolute" 
-             style={{
-               left: '25%',
-               top: '25%',
-               width: '50%',
-               height: '50%',
-               border: '2px solid rgba(255, 255, 255, 0.5)',
-               backgroundColor: 'rgba(255, 255, 255, 0.05)'
-             }}>
-        </div>
-        
-        {/* Home Plate */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-white/30 transform rotate-45"></div>
-        
-        {/* All Pitches */}
-        {pitches.map((pitch, index) => {
-          const coords = pitch.pitchData?.coordinates;
-          if (!coords || coords.pX === undefined || coords.pZ === undefined) return null;
-          
-          const { pX, pZ } = coords;
-          const strikeZoneLeft = -0.83;
-          const strikeZoneRight = 0.83;
-          const strikeZoneBottom = 1.5;
-          const strikeZoneTop = 3.5;
-          
-          const xRange = 3;
-          const zRange = 5;
-          const xPercent = ((pX + xRange/2) / xRange) * 100;
-          const zPercent = ((strikeZoneTop + 1 - pZ) / zRange) * 100;
-          
-          const inZone = pX >= strikeZoneLeft && pX <= strikeZoneRight && 
-                         pZ >= strikeZoneBottom && pZ <= strikeZoneTop;
-          
-          const isLastPitch = index === pitches.length - 1;
-          const pitchResult = pitch.details?.call?.description || '';
-          const isBall = pitchResult.includes('Ball');
-          const isStrike = pitchResult.includes('Strike') || pitchResult.includes('Foul') || pitchResult.includes('In play');
-          
-          return (
-            <div 
-              key={index}
-              className="absolute transition-all"
-              style={{
-                left: `${Math.max(0, Math.min(100, xPercent))}%`,
-                top: `${Math.max(0, Math.min(100, zPercent))}%`,
-                transform: 'translate(-50%, -50%)',
-                zIndex: isLastPitch ? 10 : 5
-              }}
-            >
-              <div 
-                className={`rounded-full ${isLastPitch ? 'w-4 h-4' : 'w-3 h-3'}`}
-                style={{
-                  backgroundColor: isBall ? '#ef4444' : isStrike ? '#22c55e' : '#6b7280',
-                  opacity: isLastPitch ? 1 : 0.6,
-                  boxShadow: isLastPitch ? (isBall ? '0 0 10px #ef4444' : '0 0 10px #22c55e') : 'none'
-                }}
-              >
-              </div>
-              {isLastPitch && (
-                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-xs text-white whitespace-nowrap bg-black/70 px-2 py-1 rounded">
-                  {pitch.details?.type?.description}
-                </div>
-              )}
-            </div>
-          );
-        })}
-        
-        <div className="absolute top-1 left-2 text-xs text-gray-400">
-          Balls: {pitches.filter(p => p.details?.call?.description?.includes('Ball')).length}
-        </div>
-        <div className="absolute top-1 right-2 text-xs text-gray-400">
-          Strikes: {pitches.filter(p => {
-            const desc = p.details?.call?.description || '';
-            return desc.includes('Strike') || desc.includes('Foul');
-          }).length}
-        </div>
-        
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-gray-400">
-          Catcher's View
-        </div>
-      </div>
-    );
-  };
-  
-  return (
-    <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 md:p-6 border border-white/10 shadow-xl">
-      <h3 className="text-white font-bold text-lg mb-3">
-        {displayPlay === currentPlay ? 'Current Play' : 'Last Play'}
-      </h3>
-      
-      <div className="space-y-4">
-        {lastPitch?.isPitch && (
-          <>
-            <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-400/20">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-blue-300 font-semibold text-lg">
-                  {lastPitch.details?.type?.description || 'Pitch'}
-                </span>
-                <span className="text-white text-2xl font-bold">
-                  {lastPitch.pitchData?.startSpeed ? `${Math.round(lastPitch.pitchData.startSpeed)} mph` : ''}
-                </span>
-              </div>
-              <div className="text-gray-300 text-sm">
-                {lastPitch.details?.description || ''}
-              </div>
-            </div>
-            
-            {renderStrikeZone()}
-          </>
-        )}
-        
-        <div className="text-gray-300 bg-white/5 p-3 rounded-lg">
-          {displayPlay.result?.description || 'No play description available'}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const PlayersSection = ({ boxscore, currentPlay }) => {
   const batterStats = currentPlay?.matchup?.batter;
   const pitcherStats = currentPlay?.matchup?.pitcher;
@@ -813,7 +980,6 @@ const PlayersSection = ({ boxscore, currentPlay }) => {
 
   return (
     <div className="space-y-4">
-      {/* Batter */}
       {batterStats && (
         <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 border border-white/10 shadow-xl">
           <h3 className="text-white font-bold mb-3 flex items-center gap-2">
@@ -861,7 +1027,6 @@ const PlayersSection = ({ boxscore, currentPlay }) => {
         </div>
       )}
 
-      {/* Pitcher */}
       {pitcherStats && (
         <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 border border-white/10 shadow-xl">
           <h3 className="text-white font-bold mb-3 flex items-center gap-2">
@@ -920,9 +1085,8 @@ const LineupSection = ({ boxscore, liveData }) => {
   
   const currentBatterId = liveData.plays.currentPlay?.matchup?.batter?.id;
   
-  // Find current batter position in the lineup
   let currentBatterPosition = -1;
-  if (currentBatterId) {
+  if (currentBatterId && battingOrder.length > 0) {
     for (let i = 0; i < battingOrder.length; i++) {
       const playerId = battingOrder[i];
       const player = players[playerId]?.person;
@@ -936,7 +1100,6 @@ const LineupSection = ({ boxscore, liveData }) => {
   const getNextBatters = () => {
     if (battingOrder.length === 0) return [];
     
-    // If we found the current batter, get next 3
     if (currentBatterPosition !== -1) {
       const next = [];
       for (let i = 1; i <= 3; i++) {
@@ -948,7 +1111,6 @@ const LineupSection = ({ boxscore, liveData }) => {
       return next;
     }
     
-    // Fallback: just show first 3 batters
     return battingOrder.slice(0, 3);
   };
 
@@ -972,7 +1134,13 @@ const LineupSection = ({ boxscore, liveData }) => {
           const player = players[playerId]?.person;
           const stats = players[playerId]?.seasonStats?.batting;
           
-          if (!player) return null;
+          if (!player) {
+            return (
+              <div key={playerId} className="text-gray-500 text-sm p-2 bg-white/5 rounded-lg">
+                Loading player data...
+              </div>
+            );
+          }
           
           return (
             <div key={playerId} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
@@ -1003,96 +1171,11 @@ const LineupSection = ({ boxscore, liveData }) => {
   );
 };
 
-const OtherLiveGamesTicker = ({ currentGamePk }) => {
-  const [otherGames, setOtherGames] = useState([]);
-
-  useEffect(() => {
-    const fetchOtherGames = async () => {
-      try {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const today = `${year}-${month}-${day}`;
-        
-        const response = await fetch(
-          `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&hydrate=linescore,team`
-        );
-        const data = await response.json();
-        
-        if (data.dates && data.dates.length > 0) {
-          const games = data.dates[0].games;
-          const live = games.filter(g => 
-            g.status.abstractGameState === 'Live' && 
-            g.gamePk !== currentGamePk
-          );
-          setOtherGames(live);
-        }
-      } catch (error) {
-        console.error('Error fetching other games:', error);
-      }
-    };
-
-    fetchOtherGames();
-    const interval = setInterval(fetchOtherGames, 30000); // Update every 30 seconds
-    return () => clearInterval(interval);
-  }, [currentGamePk]);
-
-  if (otherGames.length === 0) return null;
-
-  return (
-    <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 border border-white/10 shadow-xl">
-      <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-        Other Live Games
-      </h3>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {otherGames.map((game) => (
-          <div key={game.gamePk} className="bg-white/5 rounded-xl p-3 border border-white/10">
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="w-6 h-6 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-1 flex-shrink-0">
-                  <img 
-                    src={`https://www.mlbstatic.com/team-logos/${game.teams.away.team.id}.svg`}
-                    alt={game.teams.away.team.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <span className="text-white text-sm truncate">{game.teams.away.team.abbreviation}</span>
-              </div>
-              <span className="text-white font-bold ml-2">{game.teams.away.score}</span>
-            </div>
-            
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="w-6 h-6 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-1 flex-shrink-0">
-                  <img 
-                    src={`https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg`}
-                    alt={game.teams.home.team.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <span className="text-white text-sm truncate">{game.teams.home.team.abbreviation}</span>
-              </div>
-              <span className="text-white font-bold ml-2">{game.teams.home.score}</span>
-            </div>
-            
-            <div className="text-center text-gray-400 text-xs pt-2 border-t border-white/10">
-              {game.linescore?.isTopInning ? '▲' : '▼'} {game.linescore?.currentInningOrdinal || 'Live'}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 const NextGameDisplay = ({ game }) => {
   const gameTime = new Date(game.gameDate);
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-2xl mx-auto">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="w-12 h-12 md:w-16 md:h-16 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-2.5 flex-shrink-0">
@@ -1181,6 +1264,91 @@ const RecentScoresTicker = ({ scores }) => {
           </div>
         </div>
       ))}
+    </div>
+  );
+};
+
+const OtherLiveGamesTicker = ({ currentGamePk }) => {
+  const [otherGames, setOtherGames] = useState([]);
+
+  useEffect(() => {
+    const fetchOtherGames = async () => {
+      try {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const today = `${year}-${month}-${day}`;
+        
+        const response = await fetch(
+          `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&hydrate=linescore,team`
+        );
+        const data = await response.json();
+        
+        if (data.dates && data.dates.length > 0) {
+          const games = data.dates[0].games;
+          const live = games.filter(g => 
+            g.status.abstractGameState === 'Live' && 
+            g.gamePk !== currentGamePk
+          );
+          setOtherGames(live);
+        }
+      } catch (error) {
+        console.error('Error fetching other games:', error);
+      }
+    };
+
+    fetchOtherGames();
+    const interval = setInterval(fetchOtherGames, 30000);
+    return () => clearInterval(interval);
+  }, [currentGamePk]);
+
+  if (otherGames.length === 0) return null;
+
+  return (
+    <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 border border-white/10 shadow-xl">
+      <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+        Other Live Games
+      </h3>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {otherGames.map((game) => (
+          <div key={game.gamePk} className="bg-white/5 rounded-xl p-3 border border-white/10">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="w-6 h-6 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-1 flex-shrink-0">
+                  <img 
+                    src={`https://www.mlbstatic.com/team-logos/${game.teams.away.team.id}.svg`}
+                    alt={game.teams.away.team.name}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <span className="text-white text-sm truncate">{game.teams.away.team.abbreviation}</span>
+              </div>
+              <span className="text-white font-bold ml-2">{game.teams.away.score}</span>
+            </div>
+            
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="w-6 h-6 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-white/20 border border-white/30 shadow-lg flex items-center justify-center p-1 flex-shrink-0">
+                  <img 
+                    src={`https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg`}
+                    alt={game.teams.home.team.name}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <span className="text-white text-sm truncate">{game.teams.home.team.abbreviation}</span>
+              </div>
+              <span className="text-white font-bold ml-2">{game.teams.home.score}</span>
+            </div>
+            
+            <div className="text-center text-gray-400 text-xs pt-2 border-t border-white/10">
+              {game.linescore?.isTopInning ? '▲' : '▼'} {game.linescore?.currentInningOrdinal || 'Live'}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
