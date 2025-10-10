@@ -36,11 +36,26 @@ const Diamond = ({ linescore, boxscore, onBaseClick, baseTooltip, onCloseTooltip
         {baseTooltip?.base === baseName && baseTooltip?.runner && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onCloseTooltip}>
             <div className="bg-gray-900 rounded-2xl p-4 md:p-6 text-white shadow-2xl border border-white/20 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">Runner on {displayName}</h3><button onClick={onCloseTooltip} className="p-1 hover:bg-white/10 rounded"><X size={20} /></button></div>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-800 flex-shrink-0"><img src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_256,q_auto:best/v1/people/${baseTooltip.runner.id}/headshot/83/current`} alt={baseTooltip.runner.fullName} className="w-full h-full object-cover" onError={(e) => { e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23333" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%23fff" font-size="40">?</text></svg>'; }} /></div>
-                <div><div className="font-bold text-xl">{baseTooltip.runner.fullName}</div><div className="text-gray-400">#{baseTooltip.runner.primaryNumber}</div></div>
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-bold">Runner on {displayName}</h3>
+                <button onClick={onCloseTooltip} className="p-1 hover:bg-white/10 rounded min-h-[32px] min-w-[32px] flex-shrink-0"><X size={20} /></button>
               </div>
+              
+             <div className="flex items-center gap-4 mb-4">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-800 flex-shrink-0 border-2 border-white/20">
+                  <img 
+                    src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_256,q_auto:best/v1/people/${baseTooltip.runner.id}/headshot/83/current`} 
+                    alt={baseTooltip.runner.fullName} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => { e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23333" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%23fff" font-size="40">?</text></svg>'; }} 
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-xl truncate">{baseTooltip.runner.fullName}</div>
+                  <div className="text-gray-400">#{baseTooltip.runner.primaryNumber}</div>
+                </div>
+              </div>
+              
               {stats && (
                 <div className="grid grid-cols-3 gap-4 text-center bg-white/5 rounded-lg p-3">
                   <div><div className="text-gray-400 text-xs uppercase">AVG</div><div className="font-bold">{stats.avg}</div></div>

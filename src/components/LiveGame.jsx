@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Settings, X } from 'lucide-react';
 import Scoreboard from './Scoreboard';
 import Diamond from './Diamond';
 import Players from './Players';
 import Lineup from './Lineup';
 import CurrentPlay from './CurrentPlay';
-import OtherLiveGamesTicker from './LiveGamesTicker';
+import LiveGamesTicker from './LiveGamesTicker';
 
-const LiveGame = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSelector }) => {
+const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSelector }) => {
   const [gameData, setGameData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('game');
@@ -17,28 +17,48 @@ const LiveGame = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSele
   
   const currentGame = games[currentGameIndex];
 
+  // ** FIX: Refactored useEffect for more robust data fetching and state handling **
   useEffect(() => {
-    // Reset states when game changes
-    setGameData(null);
+    // If there's no valid game to fetch for, set state to not loading and exit.
+    if (!currentGame?.gamePk) {
+      setGameData(null);
+      setLoading(false);
+      return;
+    }
+
+    // A valid game is present, begin the loading process.
     setLoading(true);
+    setGameData(null);
     setBaseTooltip(null);
+
+    let isComponentMounted = true; // Handle component unmounting during async operations
 
     const fetchGameData = async () => {
       try {
         const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${currentGame.gamePk}/feed/live`);
         const data = await response.json();
-        setGameData(data);
+        if (isComponentMounted) {
+          setGameData(data);
+        }
       } catch (error) {
-        console.error('Error fetching game data:', error);
+        console.error(`Error fetching game data for gamePk ${currentGame.gamePk}:`, error);
       } finally {
-        setLoading(false);
+        if (isComponentMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchGameData();
     const interval = setInterval(fetchGameData, 10000);
-    return () => clearInterval(interval);
-  }, [currentGame.gamePk]);
+
+    // Cleanup function to run when component unmounts or dependency changes
+    return () => {
+      isComponentMounted = false;
+      clearInterval(interval);
+    };
+  }, [currentGame?.gamePk]);
+
 
   const handleBaseClick = (base, runner) => {
     if (runner) {
@@ -55,21 +75,21 @@ const LiveGame = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSele
   
   const showTeamStats = async (teamId, teamName) => {
     try {
-      const response = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}?hydrate=standings`);
+      const response = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}?hydrate=record`);
       const data = await response.json();
       const team = data.teams[0];
-      const standings = team.standings?.regularSeason?.records?.[0];
-      const splitRecords = standings?.records?.splitRecords || [];
-      
+      const record = team.record;
+      const splitRecords = record?.splitRecords || [];
+
       setTeamStatsDialog({
         name: teamName,
         stats: {
-          wins: standings?.wins || 0,
-          losses: standings?.losses || 0,
-          pct: standings?.winningPercentage || '.000',
-          home: `${splitRecords.find(r => r.type === 'home')?.wins || 0}-${splitRecords.find(r => r.type === 'home')?.losses || 0}`,
-          away: `${splitRecords.find(r => r.type === 'away')?.wins || 0}-${splitRecords.find(r => r.type === 'away')?.losses || 0}`,
-          gb: standings?.gamesBack || '-',
+          wins: record?.wins || 0,
+          losses: record?.losses || 0,
+          pct: record?.winningPercentage || '.000',
+          home: splitRecords.find(r => r.type === 'home')?.summary || '0-0',
+          away: splitRecords.find(r => r.type === 'away')?.summary || '0-0',
+          gb: record?.gamesBack || '-',
           l10: splitRecords.find(r => r.type === 'lastTen')?.summary || '0-0'
         }
       });
@@ -83,6 +103,37 @@ const LiveGame = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSele
   const currentPlay = plays?.currentPlay;
   const boxscore = liveData?.boxscore;
   const gameInfo = gameData?.gameData;
+
+  const renderContent = () => {
+    // ** FIX: Improved render logic to handle all states (loading, no data, success) **
+    if (loading) {
+      return <div className="text-white text-center p-8">Loading game data...</div>;
+    }
+
+    if (!gameData || !liveData) {
+      return <div className="text-white text-center p-8">Could not load details for this game.</div>;
+    }
+
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="hidden md:grid md:grid-cols-3 md:gap-4 mb-4">
+          <div className="space-y-4"><Scoreboard game={currentGame} liveData={liveData} gameInfo={gameInfo} onTeamClick={showTeamStats} /><Diamond linescore={liveData.linescore} boxscore={boxscore} onBaseClick={handleBaseClick} baseTooltip={baseTooltip} onCloseTooltip={closeTooltip} /></div>
+          <div className="space-y-4"><Players boxscore={boxscore} currentPlay={currentPlay} /><Lineup boxscore={boxscore} liveData={liveData} /></div>
+          <div><CurrentPlay currentPlay={currentPlay} plays={plays} /></div>
+        </div>
+
+        <div className="md:hidden space-y-4">
+          {activeTab === 'game' && <><Scoreboard game={currentGame} liveData={liveData} gameInfo={gameInfo} onTeamClick={showTeamStats} /><Diamond linescore={liveData.linescore} boxscore={boxscore} onBaseClick={handleBaseClick} baseTooltip={baseTooltip} onCloseTooltip={closeTooltip} /></>}
+          {activeTab === 'players' && <><Players boxscore={boxscore} currentPlay={currentPlay} /><Lineup boxscore={boxscore} liveData={liveData} /></>}
+          {activeTab === 'play' && <CurrentPlay currentPlay={currentPlay} plays={plays} />}
+        </div>
+        
+        <div className="mt-4">
+          <LiveGamesTicker currentGamePk={currentGame.gamePk} />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 flex flex-col">
@@ -123,30 +174,10 @@ const LiveGame = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSele
       </nav>
 
       <main className="flex-1 overflow-auto p-4">
-        {(loading || !gameData) ? (
-            <div className="text-white text-center">Loading game data...</div>
-        ) : (
-          <div className="max-w-7xl mx-auto">
-            <div className="hidden md:grid md:grid-cols-3 md:gap-4 mb-4">
-              <div className="space-y-4"><Scoreboard game={currentGame} liveData={liveData} gameInfo={gameInfo} onTeamClick={showTeamStats} /><Diamond linescore={liveData.linescore} boxscore={boxscore} onBaseClick={handleBaseClick} baseTooltip={baseTooltip} onCloseTooltip={closeTooltip} /></div>
-              <div className="space-y-4"><Players boxscore={boxscore} currentPlay={currentPlay} /><Lineup boxscore={boxscore} liveData={liveData} /></div>
-              <div><CurrentPlay currentPlay={currentPlay} plays={plays} /></div>
-            </div>
-
-            <div className="md:hidden space-y-4">
-              {activeTab === 'game' && <><Scoreboard game={currentGame} liveData={liveData} gameInfo={gameInfo} onTeamClick={showTeamStats} /><Diamond linescore={liveData.linescore} boxscore={boxscore} onBaseClick={handleBaseClick} baseTooltip={baseTooltip} onCloseTooltip={closeTooltip} /></>}
-              {activeTab === 'players' && <><Players boxscore={boxscore} currentPlay={currentPlay} /><Lineup boxscore={boxscore} liveData={liveData} /></>}
-              {activeTab === 'play' && <CurrentPlay currentPlay={currentPlay} plays={plays} />}
-            </div>
-            
-            <div className="mt-4">
-              <OtherLiveGamesTicker currentGamePk={currentGame.gamePk} />
-            </div>
-          </div>
-        )}
+        {renderContent()}
       </main>
     </div>
   );
 };
 
-export default LiveGame;
+export default LiveGameDisplay;
