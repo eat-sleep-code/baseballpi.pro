@@ -10,9 +10,10 @@ const TeamSelector = ({ teams, selected, onToggle, onSave }) => {
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Select Your Favorite Teams</h2>
           <p className="text-gray-300 mb-6">Choose up to {MAX_TEAMS} teams to follow.</p>
           
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 max-h-[60vh] overflow-y-auto p-1 
-            scrollbar-thin scrollbar-thumb-blue-500/80 scrollbar-track-white/10 
-            hover:scrollbar-thumb-blue-500`}>
+          {/* ** FIX: Updated scrollbar styling and padding ** */}
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 max-h-[60vh] overflow-y-auto p-1 pr-3
+            scrollbar-thin scrollbar-thumb-rounded-full scrollbar-track-white/5 
+            scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40`}>
             {teams.map(team => {
               const isSelected = selected.includes(team.id);
               const isDisabled = !isSelected && selected.length >= MAX_TEAMS;

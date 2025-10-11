@@ -17,21 +17,18 @@ const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowT
   
   const currentGame = games[currentGameIndex];
 
-  // ** FIX: Refactored useEffect for more robust data fetching and state handling **
   useEffect(() => {
-    // If there's no valid game to fetch for, set state to not loading and exit.
     if (!currentGame?.gamePk) {
       setGameData(null);
       setLoading(false);
       return;
     }
 
-    // A valid game is present, begin the loading process.
     setLoading(true);
     setGameData(null);
     setBaseTooltip(null);
 
-    let isComponentMounted = true; // Handle component unmounting during async operations
+    let isComponentMounted = true; 
 
     const fetchGameData = async () => {
       try {
@@ -52,7 +49,6 @@ const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowT
     fetchGameData();
     const interval = setInterval(fetchGameData, 10000);
 
-    // Cleanup function to run when component unmounts or dependency changes
     return () => {
       isComponentMounted = false;
       clearInterval(interval);
@@ -75,11 +71,17 @@ const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowT
   
   const showTeamStats = async (teamId, teamName) => {
     try {
+      // The API call is correct, the data parsing was the issue.
       const response = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}?hydrate=record`);
       const data = await response.json();
       const team = data.teams[0];
       const record = team.record;
       const splitRecords = record?.splitRecords || [];
+
+      // ** FIX: Find each split record object first. **
+      const homeRecord = splitRecords.find(r => r.type === 'home');
+      const awayRecord = splitRecords.find(r => r.type === 'away');
+      const lastTenRecord = splitRecords.find(r => r.type === 'lastTen');
 
       setTeamStatsDialog({
         name: teamName,
@@ -87,10 +89,11 @@ const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowT
           wins: record?.wins || 0,
           losses: record?.losses || 0,
           pct: record?.winningPercentage || '.000',
-          home: splitRecords.find(r => r.type === 'home')?.summary || '0-0',
-          away: splitRecords.find(r => r.type === 'away')?.summary || '0-0',
+          // ** FIX: Build the record string from .wins and .losses instead of using .summary **
+          home: homeRecord ? `${homeRecord.wins}-${homeRecord.losses}` : '0-0',
+          away: awayRecord ? `${awayRecord.wins}-${awayRecord.losses}` : '0-0',
           gb: record?.gamesBack || '-',
-          l10: splitRecords.find(r => r.type === 'lastTen')?.summary || '0-0'
+          l10: lastTenRecord ? `${lastTenRecord.wins}-${lastTenRecord.losses}` : '0-0',
         }
       });
     } catch (error) {
@@ -105,7 +108,6 @@ const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowT
   const gameInfo = gameData?.gameData;
 
   const renderContent = () => {
-    // ** FIX: Improved render logic to handle all states (loading, no data, success) **
     if (loading) {
       return <div className="text-white text-center p-8">Loading game data...</div>;
     }
