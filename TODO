@@ -1,3 +1,4 @@
 - Enable local storage for favorite team selection
 - Verify scoreboard modal changes
 - Verify on-base modal changes
+- Make recent scores cards be on a grid instead of one per row.

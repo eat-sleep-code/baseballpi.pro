@@ -4,7 +4,7 @@ How did the old 1970's Chevy jingle go?  *"**Baseball**, hot dogs, **apple pie**
 
 Get the live box score, plays, and batter stats of your favorite MLB team[\*](#important-notice) right on your desktop.
 
-:baseball: [View images and a short video of this device.](https://eat-sleep-code.com/blog/get-the-live-box-score-plays-and-batter-stats-of-your-favorite-mlb-team-right-on-your-desktop)
+:baseball: [View images and a short video of this device.](#)
 
 
 ## Setup Instructions
