@@ -20,10 +20,14 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 
 	const renderStrikeZone = () => {
 		return (
-			<div className="relative w-full mx-auto aspect-square bg-gradient-to-br from-blue-900/20 to-blue-800/20 rounded-lg border border-blue-400/30 overflow-hidden">
+			<div
+				className="relative w-full mx-auto aspect-square rounded-lg border border-blue-400/30 overflow-hidden bg-cover bg-center"
+				style={{ backgroundImage: `url('/images/strikezone.jpg')` }}
+			>
+				{/* The inner box representing the official strike zone */}
 				<div className="absolute" style={{ left: '25%', top: '25%', width: '50%', height: '50%', border: '2px solid rgba(255, 255, 255, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
-				<div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-white/30 transform rotate-45"></div>
-
+				
+			
 				{pitches.map((pitch, index) => {
 					const coords = pitch.pitchData?.coordinates;
 					if (!coords || typeof coords.pX !== 'number' || typeof coords.pZ !== 'number') return null;
