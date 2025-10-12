@@ -20,7 +20,7 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 
 	const renderStrikeZone = () => {
 		return (
-			<div className="relative w-full max-w-xs mx-auto aspect-square bg-gradient-to-br from-blue-900/20 to-blue-800/20 rounded-lg border border-blue-400/30 overflow-hidden">
+			<div className="relative w-full mx-auto aspect-square bg-gradient-to-br from-blue-900/20 to-blue-800/20 rounded-lg border border-blue-400/30 overflow-hidden">
 				<div className="absolute" style={{ left: '25%', top: '25%', width: '50%', height: '50%', border: '2px solid rgba(255, 255, 255, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
 				<div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-white/30 transform rotate-45"></div>
 
@@ -66,7 +66,6 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 
 				<div className="absolute top-1 left-2"><div className="flex gap-1">{[...Array(4)].map((_, i) => <div key={i} className="w-3 h-3 rounded-full border-2 border-red-400" style={{ backgroundColor: i < balls ? '#ef4444' : 'transparent' }} />)}</div><div className="text-gray-400 text-xs mt-1">Balls</div></div>
 				<div className="absolute top-1 right-2"><div className="flex gap-1">{[...Array(3)].map((_, i) => <div key={i} className="w-3 h-3 rounded-full border-2 border-green-400" style={{ backgroundColor: i < strikes ? '#22c55e' : 'transparent' }} />)}</div><div className="text-gray-400 text-xs mt-1 text-right">Strikes</div></div>
-				<div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-gray-400">Catcher's View</div>
 			</div>
 		);
 	};

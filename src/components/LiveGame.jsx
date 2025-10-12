@@ -71,27 +71,56 @@ const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowT
 
 	const showTeamStats = async (teamId, teamName) => {
 		try {
-			// The API call is correct, the data parsing was the issue.
-			const response = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}?hydrate=record`);
+			const response = await fetch(`https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=2025&standingsTypes=regularSeason`);
 			const data = await response.json();
-			const team = data.teams[0];
-			const record = team.record;
-			const splitRecords = record?.splitRecords || [];
+			
+			// Find the team in the standings
+			let teamRecord = null;
+			for (const recordList of data.records || []) {
+				const team = recordList.teamRecords?.find(t => t.team.id === teamId);
+				if (team) {
+					teamRecord = team;
+					break;
+				}
+			}
 
-			const homeRecord = splitRecords.find(r => r.type === 'home');
-			const awayRecord = splitRecords.find(r => r.type === 'away');
-			const lastTenRecord = splitRecords.find(r => r.type === 'lastTen');
+			if (!teamRecord) {
+				console.error('Team not found in standings');
+				setTeamStatsDialog({
+					name: teamName,
+					stats: {
+						wins: '-',
+						losses: '-',
+						pct: '-',
+						home: '-',
+						away: '-',
+						gb: '-',
+						l10: '-',
+					}
+				});
+				return;
+			}
+
+			const winPct = teamRecord.leagueRecord?.pct 
+				? teamRecord.leagueRecord.pct 
+				: '.000';
 
 			setTeamStatsDialog({
 				name: teamName,
 				stats: {
-					wins: record?.wins || 0,
-					losses: record?.losses || 0,
-					pct: record?.winningPercentage || '.000',
-					home: homeRecord ? `${homeRecord.wins}-${homeRecord.losses}` : '0-0',
-					away: awayRecord ? `${awayRecord.wins}-${awayRecord.losses}` : '0-0',
-					gb: record?.gamesBack || '-',
-					l10: lastTenRecord ? `${lastTenRecord.wins}-${lastTenRecord.losses}` : '0-0',
+					wins: teamRecord.leagueRecord?.wins ?? '-',
+					losses: teamRecord.leagueRecord?.losses ?? '-',
+					pct: winPct,
+					home: teamRecord.records?.splitRecords?.find(r => r.type === 'home') 
+						? `${teamRecord.records.splitRecords.find(r => r.type === 'home').wins}-${teamRecord.records.splitRecords.find(r => r.type === 'home').losses}` 
+						: '-',
+					away: teamRecord.records?.splitRecords?.find(r => r.type === 'away') 
+						? `${teamRecord.records.splitRecords.find(r => r.type === 'away').wins}-${teamRecord.records.splitRecords.find(r => r.type === 'away').losses}` 
+						: '-',
+					gb: teamRecord.gamesBack ?? '-',
+					l10: teamRecord.records?.splitRecords?.find(r => r.type === 'lastTen') 
+						? `${teamRecord.records.splitRecords.find(r => r.type === 'lastTen').wins}-${teamRecord.records.splitRecords.find(r => r.type === 'lastTen').losses}` 
+						: '-',
 				}
 			});
 		} catch (error) {

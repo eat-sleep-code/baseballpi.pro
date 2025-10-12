@@ -8,13 +8,24 @@ const Diamond = ({ linescore, boxscore, onBaseClick, baseTooltip, onCloseTooltip
 	if (offense?.second) basesOccupied['2B'] = { ...offense.second, details: { runner: offense.second } };
 	if (offense?.third) basesOccupied['3B'] = { ...offense.third, details: { runner: offense.third } };
 
-	const getPlayerStats = (playerId) => {
+	const getPlayerData = (playerId) => {
 		if (!boxscore || !playerId) return null;
-		const player = boxscore.teams?.away?.players?.[`ID${playerId}`] || boxscore.teams?.home?.players?.[`ID${playerId}`];
+		return boxscore.teams?.away?.players?.[`ID${playerId}`] || boxscore.teams?.home?.players?.[`ID${playerId}`];
+	};
+
+	const getPlayerStats = (playerId) => {
+		const player = getPlayerData(playerId);
 		return player?.seasonStats?.batting;
 	};
 
-	const tooltipStats = baseTooltip?.runner ? getPlayerStats(baseTooltip.runner.id) : null;
+	// Get the full player data with jersey number for the tooltip
+	const tooltipPlayerData = baseTooltip?.runner ? getPlayerData(baseTooltip.runner.id) : null;
+	const tooltipStats = tooltipPlayerData?.seasonStats?.batting;
+	const tooltipRunner = tooltipPlayerData?.person ? {
+		...tooltipPlayerData.person,
+		primaryNumber: tooltipPlayerData.jerseyNumber
+	} : baseTooltip?.runner;
+
 	const baseDisplayName = baseTooltip?.base
 		? { '1B': '1st', '2B': '2nd', '3B': '3rd' }[baseTooltip.base]
 		: '';
@@ -27,7 +38,7 @@ const Diamond = ({ linescore, boxscore, onBaseClick, baseTooltip, onCloseTooltip
 			<div className="relative" style={{ position: 'absolute', ...position }}>
 				<button
 					onClick={() => onBaseClick(baseName, runner)}
-					className={`w-10 h-10 md:w-14 md:h-14 rotate-45 transition-all flex items-center justify-center ${runner
+					className={`rounded w-10 h-10 md:w-14 md:h-14 rotate-45 transition-all flex items-center justify-center ${runner
 							? 'bg-yellow-400 border-2 border-yellow-500 shadow-lg shadow-yellow-500/50'
 							: 'bg-white/20 border-2 border-white/40'
 						}`}
@@ -65,15 +76,15 @@ const Diamond = ({ linescore, boxscore, onBaseClick, baseTooltip, onCloseTooltip
 						<div className="flex items-center gap-4 mb-4">
 							<div className="w-20 h-20 rounded-full overflow-hidden bg-gray-800 flex-shrink-0 border-2 border-white/20">
 								<img
-									src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_256,q_auto:best/v1/people/${baseTooltip.runner.id}/headshot/83/current`}
-									alt={baseTooltip.runner.fullName}
+									src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_256,q_auto:best/v1/people/${tooltipRunner.id}/headshot/83/current`}
+									alt={tooltipRunner.fullName}
 									className="w-full h-full object-cover"
 									onError={(e) => { e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23333" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%23fff" font-size="40">?</text></svg>'; }}
 								/>
 							</div>
 							<div className="flex-1 min-w-0">
-								<div className="font-bold text-xl truncate">{baseTooltip.runner.fullName}</div>
-								<div className="text-gray-400">#{baseTooltip.runner.primaryNumber}</div>
+								<div className="font-bold text-xl truncate">{tooltipRunner.fullName}</div>
+								<div className="text-gray-400">#{tooltipRunner.primaryNumber}</div>
 							</div>
 						</div>
 

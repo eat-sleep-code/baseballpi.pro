@@ -1,6 +1,8 @@
 import React from 'react';
 
 const PlayerCard = ({ title, player, stats, hand }) => {
+
+	
 	if (!player || !stats) return null;
 
 	return (
@@ -39,8 +41,23 @@ const Players = ({ boxscore, currentPlay }) => {
 	const batter = currentPlay?.matchup?.batter;
 	const pitcher = currentPlay?.matchup?.pitcher;
 
-	const bStats = boxscore?.teams?.away?.players?.[`ID${batter?.id}`]?.seasonStats?.batting || boxscore?.teams?.home?.players?.[`ID${batter?.id}`]?.seasonStats?.batting;
-	const pStats = boxscore?.teams?.away?.players?.[`ID${pitcher?.id}`]?.seasonStats?.pitching || boxscore?.teams?.home?.players?.[`ID${pitcher?.id}`]?.seasonStats?.pitching;
+	const batterData = boxscore?.teams?.away?.players?.[`ID${batter?.id}`] || boxscore?.teams?.home?.players?.[`ID${batter?.id}`];
+	const pitcherData = boxscore?.teams?.away?.players?.[`ID${pitcher?.id}`] || boxscore?.teams?.home?.players?.[`ID${pitcher?.id}`];
+
+	const bStats = batterData?.seasonStats?.batting;
+	const pStats = pitcherData?.seasonStats?.pitching;
+
+	// Merge person data with jersey number
+	const batterWithNumber = batterData?.person ? {
+		...batterData.person,
+		primaryNumber: batterData.jerseyNumber
+	} : batter;
+
+	const pitcherWithNumber = pitcherData?.person ? {
+		...pitcherData.person,
+		primaryNumber: pitcherData.jerseyNumber
+	} : pitcher;
+
 
 	const getBatHand = () => {
 		const code = currentPlay?.matchup?.batSide?.code;
@@ -61,7 +78,7 @@ const Players = ({ boxscore, currentPlay }) => {
 		<div className="space-y-4">
 			<PlayerCard
 				title="At Bat"
-				player={batter}
+				player={batterWithNumber}
 				hand={getBatHand()}
 				stats={bStats ? [
 					{ label: 'AVG', value: bStats.avg },
@@ -71,7 +88,7 @@ const Players = ({ boxscore, currentPlay }) => {
 			/>
 			<PlayerCard
 				title="Pitching"
-				player={pitcher}
+				player={pitcherWithNumber}
 				hand={getPitchHand()}
 				stats={pStats ? [
 					{ label: 'ERA', value: pStats.era },
