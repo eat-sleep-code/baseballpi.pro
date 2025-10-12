@@ -30,8 +30,11 @@ export default defineConfig({
 			]
 		})
 	],
+	preview: {
+		port: 3000,
+	},
 	server: {
-		port: 3201,
+		port: 3200,
 		open: true,
 	},
 	build: {
