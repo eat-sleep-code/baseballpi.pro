@@ -1,0 +1,2 @@
+#!/bin/bash
+exec sudo /home/pi/baseballpi.pro-venv/bin/python /home/pi/baseballpi.pro/launcher/baseball.py

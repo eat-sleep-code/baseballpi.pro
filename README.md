@@ -33,7 +33,6 @@ This app can be deployed as a static site to:
 Build the project with `npm run build` and deploy the `dist` folder.
 
 
-
 # Trademarks 
 
 All game data is the property of **Major League Baseball Properties, Inc.**
