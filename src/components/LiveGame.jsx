@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Settings, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, Info, X } from 'lucide-react';
 import Scoreboard from './Scoreboard';
 import Diamond from './Diamond';
 import Players from './Players';
@@ -7,7 +7,7 @@ import Lineup from './Lineup';
 import CurrentPlay from './CurrentPlay';
 import LiveGamesTicker from './LiveGamesTicker';
 
-const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSelector }) => {
+const LiveGame = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSelector, onShowPrivacyAndTermsModal }) => {
 	const [gameData, setGameData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [activeTab, setActiveTab] = useState('game');
@@ -54,7 +54,6 @@ const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowT
 			clearInterval(interval);
 		};
 	}, [currentGame?.gamePk]);
-
 
 	const handleBaseClick = (base, runner) => {
 		if (runner) {
@@ -192,8 +191,9 @@ const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowT
 						</>
 					)}
 				</div>
-				<h1 className="text-white text-lg md:text-2xl font-bold flex-1 text-center">MLB Live Tracker</h1>
-				<button onClick={onShowTeamSelector} className="p-2 hover:bg-white/10 rounded-lg"><Settings className="text-white" size={24} /></button>
+				<h1 className="sr-only text-white text-lg md:text-2xl font-bold flex-1 text-center">Baseball Pi Pro</h1>
+				<button onClick={onShowTeamSelector} title="Manage Favorite Teams" className="p-2 hover:bg-white/10 rounded-lg"><Settings className="text-white" size={24} /></button>
+				<button onClick={onShowPrivacyAndTermsModal} title="View Privacy Policy and Terms of Use" className="p-2 hover:bg-white/10 rounded-lg"><Info className="text-white" size={24} /></button>
 			</header>
 
 			<nav className="md:hidden flex backdrop-blur-xl bg-white/5 border-b border-white/10">
@@ -209,4 +209,4 @@ const LiveGameDisplay = ({ games, currentGameIndex, setCurrentGameIndex, onShowT
 	);
 };
 
-export default LiveGameDisplay;
+export default LiveGame;
