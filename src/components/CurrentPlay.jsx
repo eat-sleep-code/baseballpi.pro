@@ -22,12 +22,20 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 		return (
 			<div
 				className="relative w-full mx-auto aspect-square rounded-lg border border-blue-400/30 overflow-hidden bg-cover bg-center"
-				style={{ backgroundImage: `url('/images/strikezone.jpg')` }}
+				style={{
+					backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/images/strikezone.jpg')`
+				}}
 			>
 				{/* The inner box representing the official strike zone */}
 				<div className="absolute" style={{ left: '25%', top: '25%', width: '50%', height: '50%', border: '2px solid rgba(255, 255, 255, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
+
+				{/* 3x3 grid overlay */}
+				<div className="absolute" style={{ left: '25%', top: '25%', width: '50%', height: '50%', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)', gap: '0' }}>
+					{[...Array(9)].map((_, i) => (
+						<div key={i} style={{ border: '1px solid rgba(255, 255, 255, 0.3)' }} />
+					))}
+				</div>
 				
-			
 				{pitches.map((pitch, index) => {
 					const coords = pitch.pitchData?.coordinates;
 					if (!coords || typeof coords.pX !== 'number' || typeof coords.pZ !== 'number') return null;
@@ -59,11 +67,13 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 							>
 								<span className="text-white text-xs font-bold">{index + 1}</span>
 							</div>
+							{/*
 							{isLastPitch && pitch.details?.type?.description && (
 								<div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-xs text-white whitespace-nowrap bg-black/70 px-2 py-1 rounded">
 									{pitch.details.type.description}
 								</div>
 							)}
+							*/}
 						</div>
 					);
 				})}
@@ -78,6 +88,9 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 		<div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 md:p-6 border border-white/10 shadow-xl">
 			<h3 className="text-white font-bold text-lg mb-3">{displayPlay === currentPlay ? 'Current Play' : 'Last Play'}</h3>
 			<div className="space-y-4">
+
+				{renderStrikeZone()}
+
 				{lastPitch?.isPitch && (
 					<div className="p-4 bg-blue-500/10 rounded-xl border border-blue-400/20">
 						<div className="flex justify-between items-center mb-2">
@@ -88,11 +101,11 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 					</div>
 				)}
 
-				{renderStrikeZone()}
-
-				<div className="text-gray-300 bg-white/5 p-3 rounded-lg">
-					{displayPlay.result?.description || 'No play description available'}
-				</div>
+				{displayPlay.result?.description && (
+					<div className="text-gray-300 bg-white/5 p-3 rounded-lg">
+						{displayPlay.result.description}
+					</div>
+				)}
 			</div>
 		</div>
 	);
