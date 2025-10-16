@@ -41,9 +41,13 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 					if (!coords || typeof coords.pX !== 'number' || typeof coords.pZ !== 'number') return null;
 
 					const { pX, pZ } = coords;
-					// This calculation maps the API's (x, z) coordinates to percentages for CSS positioning
-					const xPercent = ((pX + 1.5) / 3) * 100;
-					const zPercent = (1 - ((pZ - 1.5) / 2)) * 100;
+					// Map coordinates to the full container
+					// pX typically ranges from about -1.5 to +1.5 feet (strike zone width ~17 inches)
+					// pZ typically ranges from about 1.5 to 3.5 feet (strike zone height)
+					// The strike zone box is positioned at 25-75% of container (50% width/height)
+					// Scaling up a bit more to spread pitches across the visible area
+					const xPercent = 50 + (pX / 0.7) * 25; // Map ±1.2 feet to ±25% of container
+					const zPercent = 50 - ((pZ - 2.5) / 0.8) * 25; // Map ~0.8 feet range to ±25% of container
 
 					const isLastPitch = index === pitches.length - 1;
 					const call = pitch.details?.call?.description || '';
@@ -59,9 +63,9 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 							<div
 								className={`rounded-full flex items-center justify-center ${isLastPitch ? 'w-6 h-6' : 'w-5 h-5'}`}
 								style={{
-									backgroundColor: isBall ? '#ef4444' : isStrike ? '#22c55e' : '#6b7280',
+									backgroundColor: isBall ? '#22c55e' : isStrike ? '#ef4444' : '#6b7280',
 									opacity: isLastPitch ? 1 : 0.7,
-									boxShadow: isLastPitch ? `0 0 10px ${isBall ? '#ef4444' : isStrike ? '#22c55e' : 'none'}` : 'none',
+									boxShadow: isLastPitch ? `0 0 10px ${isBall ? '#22c55e' : isStrike ? '#ef4444' : 'none'}` : 'none',
 									border: '2px solid rgba(255,255,255,0.5)'
 								}}
 							>

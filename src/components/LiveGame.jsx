@@ -47,7 +47,7 @@ const LiveGame = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSele
 		};
 
 		fetchGameData();
-		const interval = setInterval(fetchGameData, 10000);
+		const interval = setInterval(fetchGameData, 5000);
 
 		return () => {
 			isComponentMounted = false;
