@@ -82,8 +82,8 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 					);
 				})}
 
-				<div className="absolute top-1 left-2"><div className="flex gap-1">{[...Array(4)].map((_, i) => <div key={i} className="w-3 h-3 rounded-full border-2 border-red-400" style={{ backgroundColor: i < balls ? '#ef4444' : 'transparent' }} />)}</div><div className="text-gray-400 text-xs mt-1">Balls</div></div>
-				<div className="absolute top-1 right-2"><div className="flex gap-1">{[...Array(3)].map((_, i) => <div key={i} className="w-3 h-3 rounded-full border-2 border-green-400" style={{ backgroundColor: i < strikes ? '#22c55e' : 'transparent' }} />)}</div><div className="text-gray-400 text-xs mt-1 text-right">Strikes</div></div>
+				<div className="absolute top-1 left-2"><div className="flex gap-1">{[...Array(4)].map((_, i) => <div key={i} className="w-3 h-3 rounded-full border-2 border-green-400" style={{ backgroundColor: i < balls ? '#22c55e' : 'transparent' }} />)}</div><div className="text-gray-200 text-xs mt-1">Balls</div></div>
+				<div className="absolute top-1 right-2"><div className="flex gap-1">{[...Array(3)].map((_, i) => <div key={i} className="w-3 h-3 rounded-full border-2  border-red-400" style={{ backgroundColor: i < strikes ? '#ef4444' : 'transparent' }} />)}</div><div className="text-gray-200 text-xs mt-1 text-right">Strikes</div></div>
 			</div>
 		);
 	};

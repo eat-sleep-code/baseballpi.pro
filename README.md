@@ -7,7 +7,15 @@ Get the live box score, plays, and batter stats of your favorite MLB team[\*](#i
 :baseball: [View images and a short video of this device.](#)
 
 
-## Setup Instructions
+## Launcher
+
+### Setup Instructions
+
+See [Getting Started](launcher/README.md)
+
+## Web Application 
+
+### Setup Instructions
 
 1. **Install dependencies:**
    ```bash
@@ -24,7 +32,7 @@ Get the live box score, plays, and batter stats of your favorite MLB team[\*](#i
    npm run build
    ```
 
-## Deployment
+### Deployment
 
 This app can be deployed as a static site to:
 - Cloudflare Workers
