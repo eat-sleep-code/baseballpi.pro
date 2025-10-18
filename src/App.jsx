@@ -280,7 +280,7 @@ const App = () => {
 							>
 								email request
 							</a>
-							{' '} and we'll send you a unique client ID for continued free access.
+							{' '} and we'll send you a unique Client ID for continued free access.
 						</p>
 
 					</div>
