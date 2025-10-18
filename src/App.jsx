@@ -7,6 +7,26 @@ import RecentScoresTicker from './components/RecentScoresTicker';
 import PrivacyAndTermsModal from './components/PrivacyAndTermsModal';
 
 const App = () => {
+	// Client ID validation
+	const [clientIdValid, setClientIdValid] = useState(false);
+	const [checkingClientId, setCheckingClientId] = useState(true);
+
+	useEffect(() => {
+		const urlParams = new URLSearchParams(window.location.search);
+		const clientID = urlParams.get('clientID');
+		const expectedClientID = btoa(window.location.hostname);
+
+		const isLocalhost = window.location.hostname === 'localhost' ||
+			window.location.hostname === '127.0.0.1';
+
+		if (isLocalhost || (clientID && clientID === expectedClientID)) {
+			setClientIdValid(true);
+		} else {
+			setClientIdValid(false);
+		}
+		setCheckingClientId(false);
+	}, []);
+
 	const [favoriteTeams, setFavoriteTeams] = useState(() => {
 		const saved = localStorage.getItem('mlb-favorite-teams');
 		return saved ? JSON.parse(saved) : [];
@@ -68,7 +88,23 @@ const App = () => {
 				const data = await response.json();
 
 				if (!data.dates || data.dates.length === 0) {
-					setIsOffSeason(true);
+					// Check next 7 days to see if there are any upcoming games
+					let hasUpcomingGames = false;
+					for (let i = 1; i <= 7; i++) {
+						const checkDate = new Date(now);
+						checkDate.setDate(checkDate.getDate() + i);
+						const dateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
+
+						const futureResponse = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${dateStr}`);
+						const futureData = await futureResponse.json();
+
+						if (futureData.dates && futureData.dates.length > 0) {
+							hasUpcomingGames = true;
+							break;
+						}
+					}
+
+					setIsOffSeason(!hasUpcomingGames);
 					setLoading(false);
 					return;
 				}
@@ -155,6 +191,51 @@ const App = () => {
 		});
 	};
 
+	// Show client ID error screen if validation fails
+	if (checkingClientId) {
+		return (
+			<div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 flex items-center justify-center">
+				<div className="text-white text-xl">Validating access...</div>
+			</div>
+		);
+	}
+
+	if (!clientIdValid) {
+		return (
+			<div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 flex items-center justify-center p-4">
+				<div className="max-w-2xl w-full backdrop-blur-xl bg-white/5 rounded-3xl p-8 border border-white/10 shadow-2xl">
+					<div className="text-center mb-6">
+						<div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500/20 rounded-full mb-4 border border-blue-400/30">
+							<svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+							</svg>
+						</div>
+						<h1 className="text-3xl font-bold text-white mb-4">Client ID Required</h1>
+					</div>
+
+					<div className="space-y-4 text-gray-300">
+						<p>
+							To help ensure fair access and prevent excessive usage of Baseball Pi Pro, all users are now required to use a Client ID.
+						</p>
+						<p className="mb-2">
+							Email us at{' '}
+							<a
+								href="mailto:client-id-request@baseballpi.pro"
+								className="text-blue-400 hover:text-blue-300 font-medium underline"
+								title="Request Client ID via Email"
+								aria-label="Request Client ID via Email"
+							>
+								client-id-request@baseballpi.pro
+							</a>
+							{' '}and we'll send you a unique ID for continued access.
+						</p>
+
+					</div>
+				</div>
+			</div>
+		);
+	}
+
 	if (showTeamSelector) {
 		return <TeamSelector
 			teams={allTeams}
@@ -186,7 +267,7 @@ const App = () => {
 							className="mr-2 mt-8 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-xl border border-blue-400/30 transition-all"
 							title="Manage Favorite Teams"
 						>
-							<Settings className="inline" size={20}/>
+							<Settings className="inline" size={20} />
 						</button>
 						<button
 							onClick={() => setShowPrivacyAndTermsModal(true)}
@@ -197,7 +278,7 @@ const App = () => {
 						</button>
 					</div>
 				</div>
-				<PrivacyAndTermsModal 
+				<PrivacyAndTermsModal
 					isOpen={showPrivacyAndTermsModal}
 					onClose={() => setShowPrivacyAndTermsModal(false)}
 				/>
@@ -215,7 +296,7 @@ const App = () => {
 							className="mr-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 text-white transition-all min-h-[44px]"
 							title="Manage Favorite Teams"
 						>
-							<Settings className="inline" size={20}/>
+							<Settings className="inline" size={20} />
 						</button>
 						<button
 							onClick={() => setShowPrivacyAndTermsModal(true)}
@@ -284,7 +365,7 @@ const App = () => {
 						)}
 					</div>
 				</div>
-				<PrivacyAndTermsModal 
+				<PrivacyAndTermsModal
 					isOpen={showPrivacyAndTermsModal}
 					onClose={() => setShowPrivacyAndTermsModal(false)}
 				/>
@@ -301,7 +382,7 @@ const App = () => {
 				onShowTeamSelector={() => setShowTeamSelector(true)}
 				onShowPrivacyAndTermsModal={() => setShowPrivacyAndTermsModal(true)}
 			/>
-			<PrivacyAndTermsModal 
+			<PrivacyAndTermsModal
 				isOpen={showPrivacyAndTermsModal}
 				onClose={() => setShowPrivacyAndTermsModal(false)}
 			/>

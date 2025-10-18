@@ -116,17 +116,17 @@ const PrivacyAndTermsModal = ({ isOpen, onClose }) => {
 
 							<h3 className="text-lg font-semibold text-white mb-1">Trademarks</h3>
 						
-							All game data is the property of **Major League Baseball Properties, Inc.**
-							<br />
-							<br />
-							The following are trademarks or service marks of Major League Baseball entities and may be used only with permission of Major League Baseball Properties, Inc. or the relevant Major League Baseball entity: Major League, Major League Baseball, MLB, the silhouetted batter logo, World Series, National League, American League, Division Series, League Championship Series, All-Star Game, and the names, nicknames, logos, uniform designs, color combinations, and slogans designating the Major League Baseball clubs and entities, and their respective mascots, events and exhibitions.
-							<br />
-							<br />
-							This web application was created for personal use only and does not construe any rights to use this data without the express permission of Major League Baseball Properties, Inc.
-							<br />
+							<div className="backdrop-blur-xl bg-white/5 rounded-2xl p-4 md:p-6 border border-white/10 shadow-xl">
+								All game data is the property of <strong>Major League Baseball Properties, Inc.</strong>
+								<br />
+								<br />
+								The following are trademarks or service marks of Major League Baseball entities and may be used only with permission of Major League Baseball Properties, Inc. or the relevant Major League Baseball entity: Major League, Major League Baseball, MLB, the silhouetted batter logo, World Series, National League, American League, Division Series, League Championship Series, All-Star Game, and the names, nicknames, logos, uniform designs, color combinations, and slogans designating the Major League Baseball clubs and entities, and their respective mascots, events and exhibitions.
+								<br />
+								<br />
+								This web application was created for personal use only and does not construe any rights to use this data without the express permission of Major League Baseball Properties, Inc.
+							</div>
 							<br />
 							Other trademarks used throughout this repository are the property of their respective owners and are used for identification purposes only.
-							You may not hold the owners and operators (or any associated parties) of the this web application and related repositories liable or financially responsible for any damages including—but not limited to—emotional, physical, or financial damages incurred during or after the use of this repository or any referenced websites. Use of this web application, associated repositories, and/or the code found within constitutes an agreement to these terms.
 							<br />
 
 							<br />

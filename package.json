@@ -1,7 +1,7 @@
 {
   "name": "Baseball Pi Pro",
   "private": true,
-  "version": "2025.10.15",
+  "version": "2025.10.18",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "start": "vite"
   },
   "dependencies": {
-    "lucide-react": "^0.545.0",
+    "lucide-react": "^0.546.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
