@@ -16,10 +16,63 @@ const App = () => {
 		const clientID = urlParams.get('clientID');
 		const expectedClientID = btoa(window.location.hostname);
 
+		// Helper function to check if IP is in private range
+		const isPrivateIP = (hostname) => {
+			// Check for localhost
+			if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+				return true;
+			}
+
+			// Check if hostname ends with .local
+			if (hostname.endsWith('.local')) {
+				return true;
+			}
+
+			// Extract IP address (IPv4 only for simplicity)
+			const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+			const match = hostname.match(ipv4Pattern);
+
+			if (!match) {
+				return false; // Not an IPv4 address
+			}
+
+			const octets = [
+				parseInt(match[1]),
+				parseInt(match[2]),
+				parseInt(match[3]),
+				parseInt(match[4])
+			];
+
+			// Validate octets are in range 0-255
+			if (octets.some(octet => octet > 255)) {
+				return false;
+			}
+
+			// Check private IP ranges
+			// 10.0.0.0 - 10.255.255.255
+			if (octets[0] === 10) {
+				return true;
+			}
+
+			// 172.16.0.0 - 172.31.255.255
+			if (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) {
+				return true;
+			}
+
+			// 192.168.0.0 - 192.168.255.255
+			if (octets[0] === 192 && octets[1] === 168) {
+				return true;
+			}
+
+			return false;
+		};
+
 		const isLocalhost = window.location.hostname === 'localhost' ||
 			window.location.hostname === '127.0.0.1';
 
-		if (isLocalhost || (clientID && clientID === expectedClientID)) {
+		const isPrivateNetwork = isPrivateIP(window.location.hostname);
+
+		if (isLocalhost || isPrivateNetwork || (clientID && clientID === expectedClientID)) {
 			setClientIdValid(true);
 		} else {
 			setClientIdValid(false);
