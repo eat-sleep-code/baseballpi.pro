@@ -271,16 +271,16 @@ const App = () => {
 							To help ensure fair access and prevent excessive usage of Baseball Pi Pro, all users are now required to use a Client ID.
 						</p>
 						<p className="mb-2">
-							Email us at{' '}
+							Send us an {' '}
 							<a
-								href="mailto:client-id-request@baseballpi.pro"
+								href="mailto:client-id-request@baseballpi.pro?subject=Baseball%20Pi%20Pro%20Client%20ID%20Request"
 								className="text-blue-400 hover:text-blue-300 font-medium underline"
 								title="Request Client ID via Email"
 								aria-label="Request Client ID via Email"
 							>
-								client-id-request@baseballpi.pro
+								email request
 							</a>
-							{' '}and we'll send you a unique ID for continued access.
+							{' '} and we'll send you a unique client ID for continued free access.
 						</p>
 
 					</div>
