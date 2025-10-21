@@ -191,7 +191,9 @@ const LiveGame = ({ games, currentGameIndex, setCurrentGameIndex, onShowTeamSele
 						</>
 					)}
 				</div>
-				<h1 className="sr-only text-white text-lg md:text-2xl font-bold flex-1 text-center">Baseball Pi Pro</h1>
+				<div class="flex-1">
+					<h1 class="sr-only text-white text-lg md:text-2xl font-bold text-center">Baseball Pi Pro</h1>
+				</div>
 				<button onClick={onShowTeamSelector} title="Manage Favorite Teams" className="p-2 hover:bg-white/10 rounded-lg"><Settings className="text-white" size={24} /></button>
 				<button onClick={onShowPrivacyAndTermsModal} title="View Privacy Policy and Terms of Use" className="p-2 hover:bg-white/10 rounded-lg"><Info className="text-white" size={24} /></button>
 			</header>
