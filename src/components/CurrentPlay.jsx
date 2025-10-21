@@ -46,7 +46,7 @@ const CurrentPlay = ({ currentPlay, plays }) => {
 					// pZ typically ranges from about 1.5 to 3.5 feet (strike zone height)
 					// The strike zone box is positioned at 25-75% of container (50% width/height)
 					// Scaling up a bit more to spread pitches across the visible area
-					const xPercent = 50 + (pX / 0.7) * 25; // Map ±1.2 feet to ±25% of container
+					const xPercent = 50 + (pX / 0.7) * 25; // Map ±0.7 feet to ±25% of container
 					const zPercent = 50 - ((pZ - 2.5) / 0.8) * 25; // Map ~0.8 feet range to ±25% of container
 
 					const isLastPitch = index === pitches.length - 1;
