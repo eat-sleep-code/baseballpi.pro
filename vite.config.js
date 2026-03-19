@@ -42,7 +42,7 @@ export default defineConfig({
 	build: {
 		outDir: 'dist',
 		assetsDir: 'assets',
-		rollupOptions: {
+		rolldownOptions: {
 			output: {
 				entryFileNames: `scripts/index.js`,     // no hash in main entry file name
 				chunkFileNames: `scripts/[name].js`,    // no hash in chunks
