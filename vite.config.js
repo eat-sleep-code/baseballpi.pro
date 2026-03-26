@@ -10,24 +10,24 @@ export default defineConfig({
 		viteStaticCopy({
 			targets: [
 				{
-				src: 'src/images/*',
-				dest: 'images'  // copies to dist/images
-				},
-				{
-					src: 'src/scripts/tag-manager.js',
-					dest: 'scripts'  // copies to dist/scripts
+					src: 'src/images/*',
+					dest: 'images',  // copies to dist/images
+					rename: { stripBase: true  }
 				},
 				{
 					src: 'src/_headers',
-					dest: ''  // copies to root of dist
+					dest: '', // copies to root of dist
+					rename: { stripBase: true  }
 				},
 				{
 					src: 'src/robots.txt',
-					dest: ''  // copies to root of dist
+					dest: '', // copies to root of dist
+					rename: { stripBase: true  }
 				},
 				{
 					src: 'src/sitemap.xml',
-					dest: ''  // copies to root of dist
+					dest: '',  // copies to root of dist
+					rename: { stripBase: true  }
 				},
 			]
 		})
